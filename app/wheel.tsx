@@ -1,7 +1,7 @@
-import { Button, View } from "react-native";
+import { useEffect, useRef } from "react";
+import { View, Dimensions } from "react-native";
 import Svg, { Circle, Path } from "react-native-svg";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing } from "react-native-reanimated";
-import { useRef } from "react";
 
 interface WheelProps {
   radius: number;
@@ -9,7 +9,11 @@ interface WheelProps {
   centerY: number;
   numSectors: number;
   colors: string[];
+  spin: boolean;
+  onSpinEnd: (arg: boolean) => void; // optional callback
 }
+
+const width = Dimensions.get("window").width;
 
 const generateSectorPaths = (radius: number, centerX: number, centerY: number, numSectors: number) => {
   const paths = [];
@@ -29,10 +33,10 @@ const generateSectorPaths = (radius: number, centerX: number, centerY: number, n
   return paths;
 };
 
-export default function Wheel({ radius, centerX, centerY, numSectors, colors }: WheelProps) {
+export default function Wheel({ radius, centerX, centerY, numSectors, colors, spin, onSpinEnd }: WheelProps) {
   const paths = generateSectorPaths(radius, centerX, centerY, numSectors);
   const rotateAngle = useSharedValue(0);
-  const totalRotation = useRef(0); // ⬅️ store total cumulative rotation
+  const totalRotation = useRef(0);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -40,28 +44,32 @@ export default function Wheel({ radius, centerX, centerY, numSectors, colors }: 
     };
   });
 
-  function handlePress() {
-    const spinAngle = (13 + Math.random() * Math.random()) * 360; // Random spin amount
-    totalRotation.current += spinAngle; // Add to total
+  const handlePress = () => {
+    const spinAngle = (13 + Math.random() * Math.random()) * 360;
+    totalRotation.current += spinAngle;
     rotateAngle.value = withTiming(totalRotation.current, {
       duration: 10000,
-      easing: Easing.out(Easing.exp),
+      easing: Easing.elastic(1),
     });
-  }
+    onSpinEnd(false);
+  };
+
+  useEffect(() => {
+    if (spin) {
+      handlePress();
+    }
+  }, [spin]);
 
   return (
     <View style={{ alignItems: "center", justifyContent: "center" }}>
       <Animated.View style={[animatedStyle]}>
-        <Svg width={radius * 2} height={radius * 2} fill="red">
+        <Svg width={width} height={radius * 2}>
           {paths.map((path, index) => (
             <Path key={index} d={path} fill={colors[index % colors.length]} />
           ))}
-          <Circle cx={centerX} cy={centerY} r={radius - 5} stroke="white" fill="none" strokeWidth={4}></Circle>
+          <Circle cx={centerX} cy={centerY} r={radius - 5} stroke="white" fill="none" strokeWidth={4} />
         </Svg>
       </Animated.View>
-      <View style={{ marginTop: 20 }}>
-        <Button title="Spin" onPress={handlePress} />
-      </View>
     </View>
   );
 }
