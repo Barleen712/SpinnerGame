@@ -6,8 +6,9 @@ import { ImageBackground } from "expo-image";
 import styles from "./styles";
 import { useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 
-const sectorColors = ["red", "green", "blue", "yellow", "orange", "purple", "pink", "brown"];
+const sectorColors = ["yellow", "orange"];
 const width = Dimensions.get("window").width;
 const topOffset = Dimensions.get("window").height * 0.5 - (Dimensions.get("window").height * 0.3) / 3;
 const raduis = width / 2.5;
@@ -38,7 +39,8 @@ export default function SpinWheel() {
   const [bid, setbid] = useState(false);
   const [toastStep, setToastStep] = useState(0);
   const [bidnumber, setbidnumber] = useState<number | undefined>();
-
+  const [balance, setbalance] = useState(10000);
+  const [disabled, setdisabled] = useState(false);
   useEffect(() => {
     showToastStep(toastStep);
   }, [toastStep]);
@@ -67,7 +69,17 @@ export default function SpinWheel() {
       setbid(true);
     }
   };
-
+  const positionX = useSharedValue(0);
+  const positionY = useSharedValue(0);
+  function PlaceBet() {
+    setbid(false);
+    setShow(false);
+    positionX.value = withTiming(positionX.value - 75);
+    positionY.value = withTiming(positionY.value - 260);
+  }
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: withTiming(positionX.value) }, { translateY: withTiming(positionY.value) }],
+  }));
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
@@ -121,12 +133,10 @@ export default function SpinWheel() {
                 )}
               />
               <TouchableOpacity
-                onPress={() => {
-                  setbid(false);
-                  setShow(false);
-                }}
+                disabled={!bidnumber}
+                onPress={PlaceBet}
                 style={{
-                  backgroundColor: "green",
+                  backgroundColor: !bidnumber ? "gray" : "green",
                   borderColor: "#c9a93d",
                   borderWidth: 2,
                   width: "50%",
@@ -139,23 +149,23 @@ export default function SpinWheel() {
               </TouchableOpacity>
             </View>
           )}
+          {!!bidnumber && !show && (
+            <Animated.View style={[styles.buttonContainer, { position: "absolute", top: "50%" }, animatedStyle]}>
+              <ImageBackground source={require("../assets/images/image.png")} style={styles.gradient}>
+                <View style={styles.innerShadow}>
+                  <Text style={[styles.text, { fontSize: 14 }]}>Bet Number</Text>
+                  <Text style={[styles.textBalance, { fontSize: 14 }]}>{bidnumber}</Text>
+                </View>
+              </ImageBackground>
+            </Animated.View>
+          )}
           <Text style={[styles.text, { marginTop: 30 }]}>Wheel Of Coins</Text>
           <View style={{ width: "90%" }}>
-            <View style={{ alignItems: "flex-end", flexDirection: "row" }}>
-              {!!bidnumber && (
-                <View style={styles.buttonContainer}>
-                  <ImageBackground source={require("../assets/images/image.png")} style={styles.gradient}>
-                    <View style={styles.innerShadow}>
-                      <Text style={[styles.text, { fontSize: 14 }]}>Bet Number</Text>
-                      <Text style={[styles.textBalance, { fontSize: 14 }]}>{bidnumber}</Text>
-                    </View>
-                  </ImageBackground>
-                </View>
-              )}
+            <View style={{ alignItems: "flex-end" }}>
               <View style={[styles.buttonContainer]}>
                 <ImageBackground source={require("../assets/images/image.png")} style={styles.gradient}>
                   <Text style={styles.textBalance}>Balance</Text>
-                  <Text style={[styles.textBalance, { fontSize: 14 }]}>🌕 10000</Text>
+                  <Text style={[styles.textBalance, { fontSize: 14 }]}>🌕 {balance}</Text>
                 </ImageBackground>
               </View>
             </View>
@@ -174,10 +184,18 @@ export default function SpinWheel() {
               onSpinEnd={setSpin}
             />
           </View>
-          <TouchableOpacity style={styles.buttonContainer} onPress={() => setSpin(true)}>
+          <TouchableOpacity
+            style={styles.buttonContainer}
+            disabled={disabled}
+            onPress={() => {
+              setSpin(true);
+              setdisabled(true);
+              setbalance((prev) => prev - 2000);
+            }}
+          >
             <ImageBackground source={require("../assets/images/image.png")} style={styles.gradient}>
               <View style={styles.innerShadow}>
-                <Text style={styles.text}>SPIN</Text>
+                <Text style={[styles.text, { color: disabled ? "gray" : "white" }]}>SPIN</Text>
               </View>
             </ImageBackground>
           </TouchableOpacity>

@@ -7,7 +7,7 @@ const right = centre - 25;
 export default function Triangle() {
   return (
     <Svg width={width} height={50}>
-      <Polygon points={`${left},0 ${centre},50 ${right},0`} fill="red"></Polygon>
+      <Polygon points={`${left},0 ${centre},50 ${right},0`} fill="rgb(31, 102, 65)"></Polygon>
     </Svg>
   );
 }

@@ -6,8 +6,7 @@ import "react-native-reanimated";
 import { CustomToast } from "./Toast/Toast";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import Toast from "react-native-toast-message";
-
-// You can customize this config as needed
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -22,11 +21,13 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Spinwheel" options={{ headerShown: false }} />
-      </Stack>
-      <StatusBar style="auto" />
-      <Toast config={CustomToast} />
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Spinwheel" options={{ headerShown: false }} />
+        </Stack>
+        <StatusBar style="auto" />
+        <Toast config={CustomToast} />
+      </GestureHandlerRootView>
     </ThemeProvider>
   );
 }
