@@ -1,10 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View, Dimensions } from "react-native";
 import Svg, { Circle, Path, Text } from "react-native-svg";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS } from "react-native-reanimated";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
-import React from "react";
-import Retry from "./Retry/Retry";
 
 interface WheelProps {
   radius: number;
@@ -14,6 +12,8 @@ interface WheelProps {
   colors: string[];
   spin: boolean;
   onSpinEnd: (arg: boolean) => void;
+  setSelectedSector: (arg: number) => void;
+  setResult: (arg: boolean) => void;
 }
 
 const width = Dimensions.get("window").width;
@@ -36,30 +36,46 @@ const generateSectorPaths = (radius: number, centerX: number, centerY: number, n
   return paths;
 };
 
-export default function Wheel({ radius, centerX, centerY, numSectors, colors, spin, onSpinEnd }: WheelProps) {
+export default function Wheel({
+  radius,
+  centerX,
+  centerY,
+  numSectors,
+  colors,
+  spin,
+  onSpinEnd,
+  setSelectedSector,
+  setResult,
+}: WheelProps) {
   const paths = generateSectorPaths(radius, centerX, centerY, numSectors);
   const rotateAngle = useSharedValue(0);
   const totalRotation = useRef(0);
   const [show, setshow] = useState(false);
   const RotationGesture = Gesture.Tap().onEnd(() => {
-    console.log("Tapped");
-    // try {
-    //   const spinAngle = (13 + Math.random() * Math.random()) * 360;
-    //   totalRotation.current += spinAngle;
-    //   rotateAngle.value = withTiming(
-    //     totalRotation.current,
-    //     {
-    //       duration: 10000,
-    //       easing: Easing.elastic(1),
-    //     },
-    //     () => {
-    //       runOnJS(() => onSpinEnd(false));
+    // console.log("Tapped");
+    // console.log("spinning again");
+    // const spinAngle = (13 + Math.random()) * 360;
+    // totalRotation.current += spinAngle;
+    // rotateAngle.value = withTiming(
+    //   totalRotation.current,
+    //   {
+    //     duration: 10000,
+    //     easing: Easing.elastic(1),
+    //   },
+    //   (finished) => {
+    //     if (finished) {
+    //       const finalRotation = totalRotation.current % 360;
+    //       const anglePerSector = 360 / numSectors;
+    //       const pointerAngle = (360 - finalRotation + 270) % 360;
+    //       const selectedSectorIndex = Math.floor(pointerAngle / anglePerSector);
+    //       const selectedSector = (selectedSectorIndex % numSectors) + 1;
+    //       runOnJS(onSpinEnd)(false);
+    //       runOnJS(setSelectedSector)(selectedSector);
+    //       runOnJS(setshow)(true);
+    //       runOnJS(setResult)(true);
     //     }
-    //   );
-    //   //
-    // } catch (error) {
-    //   console.log(error, "eror");
-    // }
+    //   }
+    // );
   });
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -67,18 +83,27 @@ export default function Wheel({ radius, centerX, centerY, numSectors, colors, sp
     };
   });
   const handlePress = () => {
-    const spinAngle = (13 + Math.random()) * 360;
-    totalRotation.current += spinAngle;
+    const fullSpins = 10; // fixed full spins
+    const randomOffset = Math.floor(Math.random() * 360); // random part
+    const spinAngle = fullSpins * 360 + randomOffset;
 
     rotateAngle.value = withTiming(
-      totalRotation.current,
+      spinAngle,
       {
-        duration: 10000,
+        duration: 8000,
         easing: Easing.elastic(1),
       },
       (finished) => {
         if (finished) {
-          console.log(finished);
+          const finalRotation = spinAngle % 360;
+          const anglePerSector = 360 / numSectors;
+          const pointerAngle = (360 - finalRotation + 270) % 360;
+          const selectedSectorIndex = Math.floor(pointerAngle / anglePerSector);
+          const selectedSector = (selectedSectorIndex % numSectors) + 1;
+
+          runOnJS(setSelectedSector)(selectedSector);
+          runOnJS(onSpinEnd)(false);
+          runOnJS(setResult)(true);
           runOnJS(setshow)(true);
         }
       }
@@ -87,12 +112,15 @@ export default function Wheel({ radius, centerX, centerY, numSectors, colors, sp
 
   useEffect(() => {
     if (spin) {
+      console.log(spin);
       handlePress();
+    } else {
+      rotateAngle.value = 0;
+      totalRotation.current = 0;
     }
   }, [spin]);
   return (
     <View style={{ alignItems: "center", justifyContent: "center" }}>
-      {show && <Retry />}
       <GestureDetector gesture={RotationGesture}>
         <Animated.View style={[animatedStyle]}>
           <Svg width={width} height={radius * 2}>
