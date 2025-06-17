@@ -1,13 +1,14 @@
 import { Text, TouchableOpacity, View, Dimensions, FlatList, BackHandler } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import Triangle from "./Triangle";
-import Wheel from "./wheel";
+import Triangle from "../Triangle/Triangle";
+
+import Wheel from "../Wheel/wheel";
 import { ImageBackground } from "expo-image";
 import styles from "./styles";
 import { useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
-import ResultMessage from "./ResultMessage";
+import ResultMessage from "../Result Message/ResultMessage";
 
 const sectorColors = ["yellow", "orange"];
 const width = Dimensions.get("window").width;
@@ -18,11 +19,11 @@ const centerX = width / 2;
 const toastSteps = [
   {
     text1: "Welcome\nto\nWheel of Coins 🌕🌕",
-    text2: "Place your bet and spin! 🎡 Each spin deducts a few coins, but big rewards await! 💵🪙",
+    text2: "Place your bet and spin! 🎡 Each spin may deduct coins or big rewards await! 💵🪙",
   },
   {
     text1: "How to Play 🎯",
-    text2: "Place your bet and spin! 🎡 Each spin deducts a single coin 🌕 from your coin balance 💰💰 ",
+    text2: "Place your bet and spin! 🎡 Each spin deducts a single coin 🌕 from your coin balance 💰💰 if u lose ",
   },
   {
     text1: "Multiplier Bonus 🎁",
@@ -33,7 +34,6 @@ const toastSteps = [
     text2: "Let the wheel decide your fortune!",
   },
 ];
-
 export default function SpinWheel() {
   const [Spin, setSpin] = useState(false);
   const [show, setShow] = useState(true);
@@ -45,7 +45,8 @@ export default function SpinWheel() {
   const [selectedSector, setselectedSector] = useState<number | undefined | string>("");
   const [result, setresult] = useState(false);
   const [lowBalance, setlowBalance] = useState(false);
-  const [coins, setcoins] = useState<number | boolean>(false);
+  const [coins, setcoins] = useState<boolean>(false);
+  const [coincount, setcoincount] = useState<number | undefined | string>();
   useEffect(() => {
     showToastStep(toastStep);
   }, [toastStep]);
@@ -92,34 +93,10 @@ export default function SpinWheel() {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
-        <ImageBackground source={require("../assets/images/image copy 2.png")} style={styles.background}>
-          {show && (
-            <View
-              style={{
-                backgroundColor: "rgba(255, 255, 0, 0.5)",
-                width: "100%",
-                height: "100%",
-                position: "absolute",
-                top: "0%",
-                zIndex: 100,
-              }}
-            />
-          )}
+        <ImageBackground source={require("../../assets/images/image copy 2.png")} style={styles.background}>
+          {show && <View style={styles.show} />}
           {bid && (
-            <View
-              style={{
-                backgroundColor: "black",
-                alignItems: "center",
-                justifyContent: "center",
-                zIndex: 110,
-                position: "absolute",
-                top: "28%",
-                borderColor: "#c9a93d",
-                borderWidth: 2,
-                padding: 10,
-                width: "90%",
-              }}
-            >
+            <View style={styles.bid}>
               <Text style={{ color: "white", fontSize: 24, textAlign: "center" }}>
                 🎯 Place your Bet, big rewards await 🎁
               </Text>
@@ -133,16 +110,16 @@ export default function SpinWheel() {
                   numColumns={5}
                   renderItem={({ item }) => (
                     <TouchableOpacity
-                      style={{
-                        backgroundColor: coins === item ? "red" : "green",
-                        margin: 10,
-                        padding: 15,
-                        borderColor: "#c9a93d",
-                        borderWidth: 2,
-                      }}
-                      onPress={() => setcoins(item)}
+                      style={[
+                        styles.next,
+                        {
+                          backgroundColor: coincount === item ? "red" : "green",
+                          padding: item === 10 ? 8 : 15,
+                        },
+                      ]}
+                      onPress={() => setcoincount(item)}
                     >
-                      <Text style={{ color: "white", fontSize: 20 }}>{item}</Text>
+                      <Text style={styles.coin}>{item}</Text>
                     </TouchableOpacity>
                   )}
                 />
@@ -153,34 +130,31 @@ export default function SpinWheel() {
                   numColumns={4}
                   renderItem={({ item }) => (
                     <TouchableOpacity
-                      style={{
-                        backgroundColor: bidnumber === item ? "red" : "green",
-                        margin: 10,
-                        padding: 15,
-                        borderColor: "#c9a93d",
-                        borderWidth: 2,
-                      }}
+                      style={[
+                        styles.next,
+                        {
+                          backgroundColor: bidnumber === item ? "red" : "green",
+                          padding: 15,
+                        },
+                      ]}
                       onPress={() => setbidnumber(item)}
                     >
-                      <Text style={{ color: "white", fontSize: 20 }}>{item}</Text>
+                      <Text style={styles.coin}>{item}</Text>
                     </TouchableOpacity>
                   )}
                 />
               )}
               <TouchableOpacity
-                disabled={!bidnumber}
+                disabled={coins ? !coincount : !bidnumber}
                 onPress={PlaceBet}
-                style={{
-                  backgroundColor: !bidnumber ? "gray" : "green",
-                  borderColor: "#c9a93d",
-                  borderWidth: 2,
-                  width: "50%",
-                  alignItems: "center",
-                  margin: 10,
-                  padding: 5,
-                }}
+                style={[
+                  {
+                    backgroundColor: (coins ? !coincount : !bidnumber) ? "gray" : "green",
+                  },
+                  styles.button,
+                ]}
               >
-                <Text style={{ color: "white", fontSize: 20 }}>{coins ? "Place Bet" : "NEXT"}</Text>
+                <Text style={styles.coin}>{coins ? "Place Bet" : "NEXT"}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -188,13 +162,13 @@ export default function SpinWheel() {
             <Animated.View
               style={[styles.buttonContainer, { position: "absolute", top: "50%", zIndex: 200 }, animatedStyle]}
             >
-              <ImageBackground source={require("../assets/images/image.png")} style={styles.gradient}>
+              <ImageBackground source={require("../../assets/images/image.png")} style={styles.gradient}>
                 <View style={styles.innerShadow}>
                   <Text style={[styles.text, { fontSize: 14 }]}>
                     Bet Number <Text style={[styles.textBalance, { fontSize: 14 }]}>: {bidnumber}</Text>
                   </Text>
                   <Text style={[styles.text, { fontSize: 14 }]}>
-                    Coins <Text style={[styles.textBalance, { fontSize: 14 }]}>: 🌕 {coins}</Text>
+                    Coins <Text style={[styles.textBalance, { fontSize: 14 }]}>: 🌕 {coincount}</Text>
                   </Text>
                 </View>
               </ImageBackground>
@@ -218,6 +192,7 @@ export default function SpinWheel() {
                 setTimeout(() => {
                   if (balance >= 10) {
                     setcoins(false);
+                    setcoincount("");
                     setselectedSector(undefined);
                     setbidnumber(undefined);
                     positionX.value = 0;
@@ -234,14 +209,14 @@ export default function SpinWheel() {
                 BackHandler.exitApp();
               }}
               setBalance={setbalance}
-              coins={coins}
+              coins={coincount}
             />
           )}
           <Text style={[styles.text, { marginTop: 30 }]}>Wheel Of Coins</Text>
           <View style={{ width: "90%" }}>
             <View style={{ alignItems: "flex-end" }}>
               <View style={[styles.buttonContainer]}>
-                <ImageBackground source={require("../assets/images/image.png")} style={styles.gradient}>
+                <ImageBackground source={require("../../assets/images/image.png")} style={styles.gradient}>
                   <Text style={styles.textBalance}>Balance</Text>
                   <Text style={[styles.textBalance, { fontSize: 14 }]}>🌕 {balance}</Text>
                 </ImageBackground>
@@ -249,7 +224,7 @@ export default function SpinWheel() {
             </View>
           </View>
           <View style={{ marginTop: 40 }}>
-            <View style={{ position: "absolute", top: "0%", zIndex: 1 }}>
+            <View style={styles.triangle}>
               <Triangle />
             </View>
             <Wheel
@@ -262,23 +237,22 @@ export default function SpinWheel() {
               onSpinEnd={setSpin}
               setSelectedSector={setselectedSector}
               setResult={setresult}
+              setdisabled={setdisabled}
             />
           </View>
           <TouchableOpacity
             style={styles.buttonContainer}
             disabled={disabled}
             onPress={() => {
-              // 👇 Reset spin state first to trigger re-run
               setSpin(false);
               setTimeout(() => {
                 setSpin(true);
               }, 50);
 
               setdisabled(true);
-              setbalance((prev) => prev - 1);
             }}
           >
-            <ImageBackground source={require("../assets/images/image.png")} style={styles.gradient}>
+            <ImageBackground source={require("../../assets/images/image.png")} style={styles.gradient}>
               <View style={styles.innerShadow}>
                 <Text style={[styles.text, { color: disabled ? "gray" : "white" }]}>SPIN</Text>
               </View>

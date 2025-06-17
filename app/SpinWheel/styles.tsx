@@ -24,6 +24,26 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
     letterSpacing: 2,
   },
+  show: {
+    backgroundColor: "rgba(255, 255, 0, 0.5)",
+    width: "100%",
+    height: "100%",
+    position: "absolute",
+    top: "0%",
+    zIndex: 100,
+  },
+  bid: {
+    backgroundColor: "black",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 110,
+    position: "absolute",
+    top: "28%",
+    borderColor: "#c9a93d",
+    borderWidth: 2,
+    padding: 10,
+    width: "90%",
+  },
   card: {
     margin: 24,
     padding: 28,
@@ -75,6 +95,16 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 2,
     letterSpacing: 2,
+  },
+  triangle: { position: "absolute", top: "0%", zIndex: 1 },
+  coin: { color: "white", fontSize: 20 },
+  button: { borderColor: "#c9a93d", borderWidth: 2, width: "50%", alignItems: "center", margin: 10, padding: 5 },
+  next: {
+    margin: 10,
+
+    justifyContent: "center",
+    borderColor: "#c9a93d",
+    borderWidth: 2,
   },
 });
 export default styles;

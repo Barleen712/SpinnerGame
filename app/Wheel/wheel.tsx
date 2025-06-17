@@ -14,6 +14,7 @@ interface WheelProps {
   onSpinEnd: (arg: boolean) => void;
   setSelectedSector: (arg: number) => void;
   setResult: (arg: boolean) => void;
+  setdisabled: (arg: boolean) => void;
 }
 
 const width = Dimensions.get("window").width;
@@ -46,36 +47,14 @@ export default function Wheel({
   onSpinEnd,
   setSelectedSector,
   setResult,
+  setdisabled,
 }: WheelProps) {
   const paths = generateSectorPaths(radius, centerX, centerY, numSectors);
   const rotateAngle = useSharedValue(0);
   const totalRotation = useRef(0);
-  const [show, setshow] = useState(false);
   const RotationGesture = Gesture.Tap().onEnd(() => {
-    // console.log("Tapped");
-    // console.log("spinning again");
-    // const spinAngle = (13 + Math.random()) * 360;
-    // totalRotation.current += spinAngle;
-    // rotateAngle.value = withTiming(
-    //   totalRotation.current,
-    //   {
-    //     duration: 10000,
-    //     easing: Easing.elastic(1),
-    //   },
-    //   (finished) => {
-    //     if (finished) {
-    //       const finalRotation = totalRotation.current % 360;
-    //       const anglePerSector = 360 / numSectors;
-    //       const pointerAngle = (360 - finalRotation + 270) % 360;
-    //       const selectedSectorIndex = Math.floor(pointerAngle / anglePerSector);
-    //       const selectedSector = (selectedSectorIndex % numSectors) + 1;
-    //       runOnJS(onSpinEnd)(false);
-    //       runOnJS(setSelectedSector)(selectedSector);
-    //       runOnJS(setshow)(true);
-    //       runOnJS(setResult)(true);
-    //     }
-    //   }
-    // );
+    runOnJS(setdisabled)(true);
+    runOnJS(onSpinEnd)(true);
   });
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -104,7 +83,6 @@ export default function Wheel({
           runOnJS(setSelectedSector)(selectedSector);
           runOnJS(onSpinEnd)(false);
           runOnJS(setResult)(true);
-          runOnJS(setshow)(true);
         }
       }
     );
@@ -112,7 +90,6 @@ export default function Wheel({
 
   useEffect(() => {
     if (spin) {
-      console.log(spin);
       handlePress();
     } else {
       rotateAngle.value = 0;
@@ -144,7 +121,7 @@ export default function Wheel({
                     alignmentBaseline="middle"
                     transform={`rotate(${angle + 90}, ${textX}, ${textY})`}
                   >
-                    {`${index + 1}`} {/* Replace with custom text per sector if needed */}
+                    {`${index + 1}`}
                   </Text>
                 </React.Fragment>
               );
