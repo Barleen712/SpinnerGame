@@ -15,6 +15,7 @@ interface WheelProps {
   setSelectedSector: (arg: number) => void;
   setResult: (arg: boolean) => void;
   setdisabled: (arg: boolean) => void;
+  setconfetti: (arg: boolean) => void;
 }
 
 const width = Dimensions.get("window").width;
@@ -48,6 +49,7 @@ export default function Wheel({
   setSelectedSector,
   setResult,
   setdisabled,
+  setconfetti,
 }: WheelProps) {
   const paths = generateSectorPaths(radius, centerX, centerY, numSectors);
   const rotateAngle = useSharedValue(0);
@@ -74,12 +76,12 @@ export default function Wheel({
       },
       (finished) => {
         if (finished) {
+          runOnJS(setconfetti)(true);
           const finalRotation = spinAngle % 360;
           const anglePerSector = 360 / numSectors;
           const pointerAngle = (360 - finalRotation + 270) % 360;
           const selectedSectorIndex = Math.floor(pointerAngle / anglePerSector);
           const selectedSector = (selectedSectorIndex % numSectors) + 1;
-
           runOnJS(setSelectedSector)(selectedSector);
           runOnJS(onSpinEnd)(false);
           runOnJS(setResult)(true);

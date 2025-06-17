@@ -1,7 +1,6 @@
 import { Text, TouchableOpacity, View, Dimensions, FlatList, BackHandler } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Triangle from "../Triangle/Triangle";
-
 import Wheel from "../Wheel/wheel";
 import { ImageBackground } from "expo-image";
 import styles from "./styles";
@@ -9,13 +8,14 @@ import { useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import ResultMessage from "../Result Message/ResultMessage";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import ConfettiCannon from "react-native-confetti-cannon";
 const sectorColors = ["yellow", "orange"];
 const width = Dimensions.get("window").width;
+const height = Dimensions.get("window").height;
 const topOffset = Dimensions.get("window").height * 0.5 - (Dimensions.get("window").height * 0.3) / 3;
 const raduis = width / 2.5;
 const centerX = width / 2;
-
 const toastSteps = [
   {
     text1: "Welcome\nto\nWheel of Coins 🌕🌕",
@@ -40,15 +40,31 @@ export default function SpinWheel() {
   const [bid, setbid] = useState(false);
   const [toastStep, setToastStep] = useState(0);
   const [bidnumber, setbidnumber] = useState<number | undefined | string>();
-  const [balance, setbalance] = useState(10000);
+  const [balance, setbalance] = useState<string>("");
   const [disabled, setdisabled] = useState(false);
   const [selectedSector, setselectedSector] = useState<number | undefined | string>("");
   const [result, setresult] = useState(false);
   const [lowBalance, setlowBalance] = useState(false);
   const [coins, setcoins] = useState<boolean>(false);
-  const [coincount, setcoincount] = useState<number | undefined | string>();
+  const [coincount, setcoincount] = useState<string>("");
+  const [showconfetti, setshowconfetti] = useState(false);
   useEffect(() => {
-    showToastStep(toastStep);
+    const loadBalance = async () => {
+      showToastStep(toastStep);
+      try {
+        const balance = await AsyncStorage.getItem("balance");
+        if (balance !== null) {
+          setbalance(balance);
+        } else {
+          setbalance("10000");
+          await AsyncStorage.setItem("balance", "10000");
+        }
+      } catch (e) {
+        console.error("Error loading balance", e);
+      }
+    };
+
+    loadBalance();
   }, [toastStep]);
 
   const showToastStep = (step: number) => {
@@ -90,6 +106,7 @@ export default function SpinWheel() {
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: withTiming(positionX.value) }, { translateY: withTiming(positionY.value) }],
   }));
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
@@ -105,7 +122,7 @@ export default function SpinWheel() {
               </Text>
               {coins ? (
                 <FlatList
-                  data={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+                  data={["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]}
                   key="coins"
                   numColumns={5}
                   renderItem={({ item }) => (
@@ -114,7 +131,7 @@ export default function SpinWheel() {
                         styles.next,
                         {
                           backgroundColor: coincount === item ? "red" : "green",
-                          padding: item === 10 ? 8 : 15,
+                          padding: item === "10" ? 8 : 15,
                         },
                       ]}
                       onPress={() => setcoincount(item)}
@@ -186,11 +203,13 @@ export default function SpinWheel() {
             <ResultMessage
               selectedSector={selectedSector}
               bidNumber={bidnumber}
+              setconfetti={setshowconfetti}
               onPlayAgain={() => {
+                setshowconfetti(false);
                 setresult(false);
-                setSpin(false); // 👈 force reset
+                setSpin(false);
                 setTimeout(() => {
-                  if (balance >= 10) {
+                  if (balance !== null && balance !== undefined && Number(balance) >= 10) {
                     setcoins(false);
                     setcoincount("");
                     setselectedSector(undefined);
@@ -238,6 +257,7 @@ export default function SpinWheel() {
               setSelectedSector={setselectedSector}
               setResult={setresult}
               setdisabled={setdisabled}
+              setconfetti={setshowconfetti}
             />
           </View>
           <TouchableOpacity
@@ -247,6 +267,11 @@ export default function SpinWheel() {
               setSpin(false);
               setTimeout(() => {
                 setSpin(true);
+                setbalance((prev) => {
+                  const newBalance = (parseFloat(prev) - parseFloat(coincount)).toString();
+                  AsyncStorage.setItem("balance", newBalance);
+                  return newBalance;
+                });
               }, 50);
 
               setdisabled(true);
@@ -259,6 +284,24 @@ export default function SpinWheel() {
             </ImageBackground>
           </TouchableOpacity>
         </ImageBackground>
+        {Number(selectedSector) === Number(bidnumber) && !!showconfetti && (
+          <>
+            <ConfettiCannon
+              count={100}
+              origin={{ x: height, y: 0 }}
+              explosionSpeed={200}
+              fallSpeed={2000}
+              fadeOut={true}
+            />
+            <ConfettiCannon
+              count={100}
+              origin={{ x: 0, y: width }}
+              explosionSpeed={200}
+              fallSpeed={2000}
+              fadeOut={true}
+            />
+          </>
+        )}
       </SafeAreaView>
     </SafeAreaProvider>
   );

@@ -1,41 +1,59 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View, Text, Animated, TouchableOpacity } from "react-native";
 import styles from "./styles";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 interface ResultMessageProps {
   selectedSector: number | string | undefined;
   bidNumber: number | string | undefined;
   onPlayAgain: () => void;
   onExit: () => void;
-  setBalance: (arg: (prev: number) => number) => void;
-  coins: number | string | undefined;
+  setBalance: (arg: (prev: string) => string) => void;
+  coins: string;
+  setconfetti: (arg: boolean) => void;
 }
 
-const ResultMessage = ({ selectedSector, bidNumber, onPlayAgain, onExit, setBalance, coins }: ResultMessageProps) => {
+const ResultMessage = ({
+  selectedSector,
+  bidNumber,
+  onPlayAgain,
+  onExit,
+  setBalance,
+  coins,
+  setconfetti,
+}: ResultMessageProps) => {
   const isWinner = selectedSector === bidNumber;
-
   const bounceAnim = useRef(new Animated.Value(1)).current;
-
   useEffect(() => {
-    if (isWinner) {
-      setBalance((balance: number) => balance + (typeof coins === "number" ? coins * coins : 0));
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(bounceAnim, {
-            toValue: 1.2,
-            duration: 500,
-            useNativeDriver: true,
-          }),
-          Animated.timing(bounceAnim, {
-            toValue: 1,
-            duration: 500,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-    } else {
-      setBalance((balance: number) => balance - (typeof coins === "number" ? coins : 0));
-    }
-  }, [isWinner, bounceAnim]);
+    const updateBalance = async () => {
+      const coinValue = parseFloat(coins || "0");
+
+      if (isWinner) {
+        setBalance((prev) => {
+          const newBalance = (parseFloat(prev) + coinValue * coinValue + coinValue).toString();
+          AsyncStorage.setItem("balance", newBalance);
+          return newBalance;
+        });
+
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(bounceAnim, {
+              toValue: 1.2,
+              duration: 500,
+              useNativeDriver: true,
+            }),
+            Animated.timing(bounceAnim, {
+              toValue: 1,
+              duration: 500,
+              useNativeDriver: true,
+            }),
+          ])
+        ).start();
+      }
+    };
+
+    updateBalance();
+    // setconfetti(false);
+  }, [isWinner, coins]);
 
   return (
     <View style={[styles.card, isWinner ? styles.winCard : styles.loseCard]}>
