@@ -125,7 +125,37 @@ android {
     androidResources {
         ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:!CVS:!thumbs.db:!picasa.ini:!*~'
     }
+      splits {
+        abi {
+            enable true
+            reset()
+            include 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+            universalApk false  // If true, also generates a universal APK
+        }
+    }
+
+    // Optional: assign different version codes per ABI
+    android.applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            def abi = output.getFilter(com.android.build.OutputFile.ABI)
+            if (abi != null) {
+                output.versionCodeOverride =
+                    defaultConfig.versionCode * 1000 + getAbiCode(abi)
+            }
+        }
+    }
 }
+
+def getAbiCode(abi) {
+    switch (abi) {
+        case "armeabi-v7a": return 1
+        case "arm64-v8a": return 2
+        case "x86": return 3
+        case "x86_64": return 4
+        default: return 0
+    }
+}
+
 
 // Apply static values from `gradle.properties` to the `android.packagingOptions`
 // Accepts values in comma delimited lists, example:
